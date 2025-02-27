@@ -74,7 +74,7 @@ const Game = () => {
         return () => {
             document.removeEventListener("click", handleClick);
             Matter.Render.stop(render);
-            Matter.World.clear(engine.world);
+            Matter.World.clear(engine.world, true);
             Matter.Engine.clear(engine);
         };
     }, []);
