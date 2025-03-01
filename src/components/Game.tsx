@@ -13,7 +13,6 @@ const Game = () => {
     const [isGameActive, setIsGameActive] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState(10);
     const isGameActiveRef = useRef(isGameActive);
-    let timerInterval: NodeJS.Timeout;
 
     useEffect(() => {
         countRef.current = count;
@@ -195,8 +194,6 @@ const Game = () => {
                 return prev - 1;
             });
         }, 1000);
-
-        timerInterval = timer; // 🔹 グローバル変数にセット
     };
 
     return (
