@@ -144,9 +144,21 @@ const Game = () => {
         if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return;
 
         const moyashiSizes = [
-            { width: 10, height: 40 },
-            { width: 15, height: 50 },
-            { width: 12, height: 45 },
+            { width: 6, height: 50 },
+            { width: 6, height: 60 },
+            { width: 6, height: 70 },
+            { width: 7, height: 50 },
+            { width: 7, height: 60 },
+            { width: 7, height: 70 },
+            { width: 8, height: 50 },
+            { width: 8, height: 60 },
+            { width: 8, height: 70 },
+            { width: 9, height: 50 },
+            { width: 9, height: 60 },
+            { width: 9, height: 70 },
+            { width: 10, height: 50 },
+            { width: 10, height: 60 },
+            { width: 10, height: 70 },
         ];
 
         // ランダムでサイズを選択
