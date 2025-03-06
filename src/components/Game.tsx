@@ -10,6 +10,7 @@ const Game = () => {
     const runnerRef = useRef<Matter.Runner | null>(null);
     const [count, setCount] = useState(0);
     const countRef = useRef(count);
+    const fallenCountRef = useRef(0); // UI には表示しないので useRef のみ使用
     const [isGameActive, setIsGameActive] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState(10);
     const isGameActiveRef = useRef(isGameActive);
@@ -18,12 +19,10 @@ const Game = () => {
         countRef.current = count;
     }, [count]);
 
-    // 最新の isGameActive を ref に反映
     useEffect(() => {
         isGameActiveRef.current = isGameActive;
     }, [isGameActive]);
 
-    // Matter.js のセットアップ（初回のみ実行）
     useEffect(() => {
         if (!sceneRef.current || renderRef.current) return;
 
@@ -43,27 +42,26 @@ const Game = () => {
         engineRef.current = engine;
         renderRef.current = render;
 
-        // どんぶりの形状
         const bowl = Matter.Bodies.fromVertices(
             195,
             694,
             [
                 [
-                    { x: 110, y: 700 }, // 左下
-                    { x: 90, y: 600 }, // 左カーブ
-                    { x: 80, y: 500 }, // 左上（カーブの開始）
-                    { x: 160, y: 500 }, // 中央より左（カーブの下部）
-                    { x: 230, y: 500 }, // 中央より右（カーブの下部）
-                    { x: 310, y: 500 }, // 右上（カーブの終了）
-                    { x: 300, y: 600 }, // 右カーブ
-                    { x: 280, y: 700 }, // 右下
-                    { x: 250, y: 750 }, // 高台右
-                    { x: 150, y: 750 }, // 高台左
+                    { x: 110, y: 700 },
+                    { x: 90, y: 600 },
+                    { x: 80, y: 500 },
+                    { x: 160, y: 500 },
+                    { x: 230, y: 500 },
+                    { x: 310, y: 500 },
+                    { x: 300, y: 600 },
+                    { x: 280, y: 700 },
+                    { x: 250, y: 750 },
+                    { x: 150, y: 750 },
                 ],
             ],
             {
-                isStatic: true, // 🔹 どんぶりを固定する
-                restitution: 0, // 反発係数をゼロに（跳ねないようにする）
+                isStatic: true,
+                restitution: 0,
                 render: { fillStyle: "brown" },
             }
         );
@@ -92,7 +90,6 @@ const Game = () => {
         Matter.Runner.run(runner, engine);
         Matter.Render.run(render);
 
-        // 奈落落下時
         Matter.Events.on(engine, "collisionStart", (event) => {
             event.pairs.forEach((pair) => {
                 if (
@@ -103,11 +100,11 @@ const Game = () => {
                         pair.bodyA === bottomSensor ? pair.bodyB : pair.bodyA;
                     Matter.World.remove(engine.world, moyashi);
                     setCount((prev) => prev - 1);
+                    fallenCountRef.current += 1; // 画面には表示しないので useState は不要
                 }
             });
         });
 
-        // クリックイベントリスナー登録
         render.canvas.addEventListener("click", handleClick);
 
         return () => {
@@ -117,26 +114,21 @@ const Game = () => {
             Matter.Engine.clear(engine);
             Matter.Runner.stop(runner);
 
-            // 🔹 変数を `null` にして次回の `useEffect` 実行時に再初期化されるようにする
             renderRef.current = null;
             engineRef.current = null;
             runnerRef.current = null;
         };
     }, []);
 
-    // クリックイベントハンドラ（キャンバス上で発火する）
     const handleClick = (event: MouseEvent) => {
         if (!isGameActiveRef.current) return;
         if (!renderRef.current || !engineRef.current) return;
 
         const canvas = renderRef.current.canvas;
         const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-        // 💡 本来の描画サイズでスケール補正
-        const scaleX = canvas.width / rect.width; // 横方向のスケール
-        const scaleY = canvas.height / rect.height; // 縦方向のスケール
-
-        // 補正後の正しい座標を計算
         const x = (event.clientX - rect.left) * scaleX;
         const y = (event.clientY - rect.top) * scaleY;
 
@@ -160,11 +152,10 @@ const Game = () => {
             { width: 10, height: 70 },
         ];
 
-        // ランダムでサイズを選択
         const randomSize =
             moyashiSizes[Math.floor(Math.random() * moyashiSizes.length)];
 
-        const degree = Math.random() * (30 - 330) + 330; // 330° 〜 30°
+        const degree = Math.random() * (30 - 330) + 330;
         const radian = degree * (Math.PI / 180);
 
         const moyashi = Matter.Bodies.rectangle(
@@ -182,7 +173,7 @@ const Game = () => {
             }
         );
 
-        Matter.World.add(engineRef.current.world, moyashi);
+        Matter.World.add(engineRef.current!.world, moyashi);
         setCount((prev) => prev + 1);
     };
 
@@ -190,9 +181,9 @@ const Game = () => {
         if (isGameActive) return;
         setIsGameActive(true);
         setCount(0);
+        fallenCountRef.current = 0; // 落ちたもやしのカウントをリセット
         setTimeRemaining(10);
 
-        // 🔹 タイマー変数を useRef で管理（複数回発火防止）
         const timer = setInterval(() => {
             setTimeRemaining((prev) => {
                 if (prev <= 1) {
@@ -200,9 +191,10 @@ const Game = () => {
                     if (isGameActiveRef.current) {
                         isGameActiveRef.current = false;
                         setIsGameActive(false);
-                        setCount(0);
                         Matter.World.clear(engineRef.current!.world, true);
-                        alert(`タイムアップ！もやし数: ${countRef.current}`); // 🔹 最新の `count` を取得
+                        alert(
+                            `タイムアップ！\nもやし数: ${countRef.current}\n落ちたもやし: ${fallenCountRef.current}`
+                        );
                     }
                     return 10;
                 }
@@ -221,7 +213,7 @@ const Game = () => {
                     </button>
                 )}
                 <div className={styles.timer}>残り時間: {timeRemaining}秒</div>
-                <div ref={sceneRef} /> {/* 1つだけ canvas が描画される */}
+                <div ref={sceneRef} />
             </div>
         </div>
     );
