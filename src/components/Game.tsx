@@ -191,7 +191,6 @@ const Game = () => {
                 );
 
                 Matter.World.add(engineRef.current!.world, moyashi);
-                setCount((prev) => prev + 1);
             }, 500);
 
             setMoyashiInterval(interval);
@@ -289,8 +288,6 @@ const Game = () => {
                     if (isGameActiveRef.current) {
                         isGameActiveRef.current = false;
                         setIsGameActive(false);
-                        const totalScore =
-                            (countRef.current - fallenCountRef.current) * 10;
                         alert(
                             `タイムアップ！\nもやし数: ${countRef.current}\n落ちたもやし: ${fallenCountRef.current}\nトータルスコア: ${scoreRef.current}`
                         );
@@ -304,7 +301,6 @@ const Game = () => {
     return (
         <div>
             <div className={styles.container}>
-                <div className={styles.counter}>もやし数: {count}</div>
                 {!isGameActive && (
                     <>
                         <div className={styles.title}>マシマシモヤシ</div>
@@ -316,7 +312,14 @@ const Game = () => {
                         </button>
                     </>
                 )}
-                <div className={styles.timer}>残り時間: {timeRemaining}秒</div>
+                {isGameActive && (
+                    <>
+                        <div className={styles.counter}>もやし数: {count}</div>
+                        <div className={styles.timer}>
+                            残り時間: {timeRemaining}秒
+                        </div>
+                    </>
+                )}
                 <div ref={sceneRef} />
             </div>
         </div>
